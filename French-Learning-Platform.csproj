@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>French_Learning_Platform</RootNamespace>
+    <UserSecretsId>af42f0bc-9aba-42a7-836d-29159929e992</UserSecretsId>
+  </PropertyGroup>
+
+</Project>
