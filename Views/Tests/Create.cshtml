@@ -1,0 +1,51 @@
+@model FrenchLearningPlatform.Domain.Model.Test
+
+@{
+    ViewData["Title"] = "Новий тест";
+}
+
+<h1>Новий тест</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                    <option value="">— оберіть категорію —</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Words" class="form-label"></label>
+                <input asp-for="Words" class="form-control" type="number" min="1" />
+                <span asp-validation-for="Words" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TimeLimitSeconds" class="form-label"></label>
+                <input asp-for="TimeLimitSeconds" class="form-control" type="number" min="0" placeholder="0 = без ліміту" />
+                <span asp-validation-for="TimeLimitSeconds" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <input type="submit" value="Зберегти" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

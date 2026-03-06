@@ -5,7 +5,31 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>French_Learning_Platform</RootNamespace>
-    <UserSecretsId>af42f0bc-9aba-42a7-836d-29159929e992</UserSecretsId>
+    <UserSecretsId>9ea61345-fba8-4172-94dc-84df1d5e3de2</UserSecretsId>
   </PropertyGroup>
+
+  <!-- Exclude subproject directories from glob patterns -->
+  <ItemGroup>
+    <Compile Remove="FrenchLearningPlatform.Domain\**" />
+    <Compile Remove="FrenchLearningPlatform.Infrastructure\**" />
+    <Content Remove="FrenchLearningPlatform.Domain\**" />
+    <Content Remove="FrenchLearningPlatform.Infrastructure\**" />
+    <EmbeddedResource Remove="FrenchLearningPlatform.Domain\**" />
+    <EmbeddedResource Remove="FrenchLearningPlatform.Infrastructure\**" />
+    <None Remove="FrenchLearningPlatform.Domain\**" />
+    <None Remove="FrenchLearningPlatform.Infrastructure\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="FrenchLearningPlatform.Infrastructure\FrenchLearningPlatform.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+  </ItemGroup>
 
 </Project>

@@ -1,0 +1,30 @@
+@model FrenchLearningPlatform.Domain.Model.Word
+
+@{
+    ViewData["Title"] = "Видалення слова";
+}
+
+<h1>Видалити слово?</h1>
+<div class="alert alert-danger">Ця дія є незворотною.</div>
+
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.FrenchTerm)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.FrenchTerm)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Translation)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Translation)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.DifficultyLevel)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.DifficultyLevel)</dd>
+
+    <dt class="col-sm-3">Категорія</dt>
+    <dd class="col-sm-9">@Model.Category?.Name</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Так, видалити" class="btn btn-danger" />
+        <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-secondary">Скасувати</a>
+    </div>
+</form>

@@ -1,0 +1,58 @@
+@model IEnumerable<FrenchLearningPlatform.Domain.Model.Favorite>
+
+@{
+    ViewData["Title"] = "⭐ Улюблені слова";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>⭐ Улюблені слова</h1>
+    <a asp-controller="Words" asp-action="Index" class="btn btn-secondary">← До словника</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Ви ще не додали жодного улюбленого слова. Натисніть ⭐ навпроти будь-якого слова у <a asp-controller="Words" asp-action="Index">Словнику</a>.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Французьке слово</th>
+                <th>Переклад</th>
+                <th>Категорія</th>
+                <th>Складність</th>
+                <th>Додано</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fav in Model)
+            {
+                <tr>
+                    <td><strong>@fav.Word?.FrenchTerm</strong></td>
+                    <td>@fav.Word?.Translation</td>
+                    <td>@fav.Word?.Category?.Name</td>
+                    <td>
+                        @if (fav.Word?.DifficultyLevel.HasValue == true)
+                        {
+                            @(new string('★', fav.Word.DifficultyLevel.Value))@(new string('☆', 5 - fav.Word.DifficultyLevel.Value))
+                        }
+                        else { <span class="text-muted">—</span> }
+                    </td>
+                    <td class="text-muted small">@fav.AddedAt?.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <form asp-controller="Favorites" asp-action="Toggle" method="post" class="d-inline">
+                            <input type="hidden" name="wordId" value="@fav.WordId" />
+                            <input type="hidden" name="returnUrl" value="/Favorites" />
+                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Прибрати з улюблених">⭐ Прибрати</button>
+                        </form>
+                        <a asp-controller="Words" asp-action="Details" asp-route-id="@fav.WordId" class="btn btn-sm btn-outline-info">Деталі</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

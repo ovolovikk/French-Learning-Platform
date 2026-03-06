@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace FrenchLearningPlatform.Domain.Model;
 
-public partial class Favorite : BaseEntity
+public partial class Favorite
 {
     public int UserId { get; set; }
 

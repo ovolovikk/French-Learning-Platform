@@ -1,0 +1,97 @@
+@model FrenchLearningPlatform.Domain.Model.TestAttempt
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Деталі спроби";
+
+    int correctAnswers = Model.Score ?? 0;
+    var mistakesList = new List<dynamic>();
+    int totalWords = correctAnswers;
+
+    if (!string.IsNullOrWhiteSpace(Model.MistakesJsonb))
+    {
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var parsed = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(Model.MistakesJsonb, options);
+            if (parsed != null)
+            {
+                mistakesList.AddRange(parsed);
+                totalWords += parsed.Count;
+            }
+        }
+        catch { }
+    }
+
+    int percentage = totalWords > 0 ? (int)Math.Round((double)correctAnswers / totalWords * 100) : 0;
+}
+
+<h1>Результат тесту</h1>
+<hr />
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Score)</dt>
+    <dd class="col-sm-9">
+        <span class="badge fs-5 @(percentage >= 80 ? "bg-success" : percentage >= 50 ? "bg-warning text-dark" : "bg-danger")">
+            @(correctAnswers) / @totalWords
+        </span>
+        <span class="text-muted ms-2">(@percentage%)</span>
+    </dd>
+
+    <dt class="col-sm-3">Студент</dt>
+    <dd class="col-sm-9">@Model.User?.Email</dd>
+
+    <dt class="col-sm-3">Тест</dt>
+    <dd class="col-sm-9">
+        <a asp-controller="Tests" asp-action="Details" asp-route-id="@Model.TestId">
+            @Model.Test?.Title
+        </a>
+    </dd>
+
+    <dt class="col-sm-3">Час завершення</dt>
+    <dd class="col-sm-9">@Model.CompletedAt?.ToString("dd.MM.yyyy HH:mm")</dd>
+</dl>
+
+<h4 class="mt-4">Деталі відповідей:</h4>
+
+@if (mistakesList.Any())
+{
+    <div class="alert alert-danger">
+        <strong>Ви допустили наступні помилки:</strong>
+    </div>
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Слово (Фр)</th>
+                <th>Ваша відповідь</th>
+                <th>Правильний переклад</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var mistake in mistakesList)
+            {
+                <tr>
+                    <td class="fw-bold">
+                        @(mistake.ContainsKey("french") ? mistake["french"].GetString() : "—")
+                    </td>
+                    <td class="text-danger text-decoration-line-through">
+                        @(mistake.ContainsKey("user_translation") ? mistake["user_translation"].GetString() : "—")
+                    </td>
+                    <td class="text-success fw-bold">
+                        @(mistake.ContainsKey("expected_translation") ? mistake["expected_translation"].GetString() : "—")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (totalWords > 0)
+{
+    <div class="alert alert-success">
+        🎉 Чудовий результат! Ви не допустили жодної помилки.
+    </div>
+}
+
+<div class="d-flex gap-2 mt-4">
+    <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.TestId" class="btn btn-primary">🔄 Спробувати ще раз</a>
+    <a asp-action="Index" asp-route-testId="@Model.TestId" class="btn btn-secondary">← Всі спроби</a>
+</div>

@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Імпорт слів із CSV";
+}
+
+<h1>Імпорт слів із CSV</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="alert alert-info">
+            <strong>Формат файлу:</strong><br />
+            Перша колонка — французьке слово (з артиклем або без), друга — переклад.<br />
+            <code>le chat,кіт</code><br />
+            <code>la famille,родина</code><br />
+            Підтримуються роздільники: <strong>кома (,)</strong> або <strong>крапка з комою (;)</strong>
+        </div>
+
+        <form asp-action="ImportCsv" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label for="categoryId" class="form-label">Категорія</label>
+                <select name="categoryId" id="categoryId" class="form-select" asp-items="ViewBag.Categories">
+                    <option value="">— оберіть категорію —</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="csvFile" class="form-label">CSV-файл</label>
+                <input type="file" name="csvFile" id="csvFile" class="form-control" accept=".csv,.txt" />
+                <div class="form-text">Рівень складності для імпортованих слів не встановлюється.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">⬆ Імпортувати</button>
+                @if (ViewBag.ReturnCategoryId != null)
+                {
+                    <a asp-action="Index" asp-route-categoryId="@ViewBag.ReturnCategoryId" class="btn btn-secondary">Скасувати</a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-5 offset-md-1">
+        <div class="card">
+            <div class="card-header">📋 Приклад CSV (з артиклями)</div>
+            <div class="card-body">
+                <pre class="mb-0"><code>le chat,кіт
+la maison,будинок
+un chien,собака
+la famille,родина
+bonjour,привіт
+merci,дякую</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

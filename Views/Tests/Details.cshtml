@@ -1,0 +1,29 @@
+@model FrenchLearningPlatform.Domain.Model.Test
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<h1>@Model.Title</h1>
+<hr />
+<dl class="row">
+    <dt class="col-sm-3">Категорія</dt>
+    <dd class="col-sm-9">
+        <a asp-controller="Categories" asp-action="Details" asp-route-id="@Model.CategoryId">
+            @Model.Category?.Name
+        </a>
+    </dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Words)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Words)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.TimeLimitSeconds)</dt>
+    <dd class="col-sm-9">@(Model.TimeLimitSeconds.HasValue ? $"{Model.TimeLimitSeconds} сек" : "—")</dd>
+</dl>
+
+<div class="d-flex gap-2 mb-4">
+    <a asp-action="Take" asp-route-id="@Model.Id" class="btn btn-success btn-lg">▶ Пройти тест</a>
+    <a asp-controller="TestAttempts" asp-action="Index" asp-route-testId="@Model.Id" class="btn btn-info">📊 Результати (@Model.TestAttempts.Count)</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+    <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-secondary">← Назад до тестів</a>
+</div>

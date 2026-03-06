@@ -61,9 +61,9 @@ public partial class FrenchLearningPlatformDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("user_id_fkey");
 
-            entity.HasOne(d => d.Word).WithMany(p => p.Favorites)
+            entity.HasOne(d => d.Word).WithMany()
                 .HasForeignKey(d => d.WordId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("word_id_fkey");
         });
 

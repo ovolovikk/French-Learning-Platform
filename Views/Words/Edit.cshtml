@@ -1,0 +1,59 @@
+@model FrenchLearningPlatform.Domain.Model.Word
+
+@{
+    ViewData["Title"] = "Редагування слова";
+}
+
+<h1>Редагувати слово</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                    <option value="">— оберіть категорію —</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FrenchTerm" class="form-label"></label>
+                <input asp-for="FrenchTerm" class="form-control" />
+                <span asp-validation-for="FrenchTerm" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Translation" class="form-label"></label>
+                <input asp-for="Translation" class="form-control" />
+                <span asp-validation-for="Translation" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DifficultyLevel" class="form-label"></label>
+                <select asp-for="DifficultyLevel" class="form-select">
+                    <option value="">— оберіть —</option>
+                    <option value="1">1 — Дуже легко</option>
+                    <option value="2">2 — Легко</option>
+                    <option value="3">3 — Середньо</option>
+                    <option value="4">4 — Важко</option>
+                    <option value="5">5 — Дуже важко</option>
+                </select>
+                <span asp-validation-for="DifficultyLevel" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <input type="submit" value="Зберегти" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

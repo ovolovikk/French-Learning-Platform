@@ -1,0 +1,45 @@
+@model FrenchLearningPlatform.Domain.Model.Test
+@using FrenchLearningPlatform.Domain.Model
+
+@{
+    ViewData["Title"] = $"Проходження тесту: {Model.Title}";
+    var words = ViewBag.TestWords as List<Word> ?? new List<Word>();
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="mb-4">Впишіть переклад українською мовою:</h2>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">@Model.Title</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="SubmitTest" method="post">
+                    <input type="hidden" name="testId" value="@Model.Id" />
+                    
+                    @if (!words.Any())
+                    {
+                        <div class="alert alert-warning">Для цього тесту не знайдено слів. Перевірте категорію.</div>
+                    }
+                    else
+                    {
+                        for (int i = 0; i < words.Count; i++)
+                        {
+                            var word = words[i];
+                            <div class="mb-4 pb-3 border-bottom">
+                                <label class="form-label fs-5 fw-bold text-primary">@word.FrenchTerm</label>
+                                <input type="text" name="word_@word.Id" class="form-control form-control-lg" placeholder="Ваш переклад" autocomplete="off" required />
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Скасувати</a>
+                            <button type="submit" class="btn btn-success btn-lg">Завершити та перевірити</button>
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

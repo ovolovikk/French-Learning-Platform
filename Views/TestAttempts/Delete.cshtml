@@ -1,0 +1,30 @@
+@model FrenchLearningPlatform.Domain.Model.TestAttempt
+
+@{
+    ViewData["Title"] = "Видалення спроби";
+}
+
+<h1>Видалити спробу?</h1>
+<div class="alert alert-danger">Ця дія є незворотною.</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Студент</dt>
+    <dd class="col-sm-9">@Model.User?.Email</dd>
+
+    <dt class="col-sm-3">Тест</dt>
+    <dd class="col-sm-9">@Model.Test?.Title</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Score)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Score)%</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CompletedAt)</dt>
+    <dd class="col-sm-9">@Model.CompletedAt?.ToString("dd.MM.yyyy HH:mm")</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Так, видалити" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+    </div>
+</form>

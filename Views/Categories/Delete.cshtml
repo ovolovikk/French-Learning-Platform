@@ -1,0 +1,24 @@
+@model FrenchLearningPlatform.Domain.Model.Category
+
+@{
+    ViewData["Title"] = "Видалення категорії";
+}
+
+<h1>Видалити категорію?</h1>
+<div class="alert alert-danger">Ця дія є незворотною. Будуть також видалені всі пов'язані слова та тести.</div>
+
+<dl class="row">
+    <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Name)</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Name)</dd>
+
+    <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Description)</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Description)</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Так, видалити" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+    </div>
+</form>
