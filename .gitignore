@@ -125,6 +125,8 @@ coverage*.info
 # Internal (Private) configurations
 appsettings.Development.json
 secrets.json
+appsettings.json
+appsettings.json
 
 # User specific files (Visual Studio for Mac)
 .DS_Store
