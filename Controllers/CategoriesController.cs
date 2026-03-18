@@ -115,7 +115,8 @@ public class CategoriesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // Delete child records first to satisfy FK constraints
+        await _context.TestAttempts.Where(ta => ta.Test.CategoryId == id).ExecuteDeleteAsync();
+        await _context.Favorites.Where(f => f.Word.CategoryId == id).ExecuteDeleteAsync();
         await _context.Words.Where(w => w.CategoryId == id).ExecuteDeleteAsync();
         await _context.Tests.Where(t => t.CategoryId == id).ExecuteDeleteAsync();
 
@@ -133,6 +134,9 @@ public class CategoriesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ClearWords(int id)
     {
+        // Перед видаленням слів, треба видалити їх із улюблених
+        await _context.Favorites.Where(f => f.Word.CategoryId == id).ExecuteDeleteAsync();
+
         var count = await _context.Words
             .Where(w => w.CategoryId == id)
             .ExecuteDeleteAsync();

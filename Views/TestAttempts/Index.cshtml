@@ -65,3 +65,79 @@
         }
     </tbody>
 </table>
+
+<div class="row mt-5 mb-4">
+    <div class="col-md-6">
+        <div id="attemptsByDateChart" style="height: 400px; width: 100%;"></div>
+    </div>
+    <div class="col-md-6">
+        <div id="averageScoreByTestChart" style="height: 400px; width: 100%;"></div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            // Діаграма 1: Кількість спроб по днях
+            fetch('/api/charts/attemptsByDate')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) return;
+
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Дата');
+                    dataTable.addColumn('number', 'Кількість спроб');
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.date, item.count]);
+                    });
+
+                    const options = {
+                        title: 'Кількість зданих тестів за датами',
+                        legend: { position: 'none' },
+                        backgroundColor: 'transparent',
+                        colors: ['#0dcaf0'], // блакитний/cyan колір колонок
+                        titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
+                        hAxis: { textStyle: { color: '#adb5bd' } },
+                        vAxis: { textStyle: { color: '#adb5bd' } }
+                    };
+
+                    const chart = new google.visualization.ColumnChart(document.getElementById('attemptsByDateChart'));
+                    chart.draw(dataTable, options);
+                });
+
+            // Діаграма 2: Середній бал по кожному тесту
+            fetch('/api/charts/averageScoreByTest')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) return;
+
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Тест');
+                    dataTable.addColumn('number', 'Середній бал');
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.testTitle, item.averageScore]);
+                    });
+
+                    const options = {
+                        title: 'Середній бал за тестами',
+                        legend: { position: 'none' },
+                        backgroundColor: 'transparent',
+                        colors: ['#fd7e14'], // помаранчевий колір колонок
+                        titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
+                        hAxis: { textStyle: { color: '#adb5bd' } },
+                        vAxis: { textStyle: { color: '#adb5bd' } }
+                    };
+
+                    const chart = new google.visualization.ColumnChart(document.getElementById('averageScoreByTestChart'));
+                    chart.draw(dataTable, options);
+                });
+        }
+    </script>
+}
