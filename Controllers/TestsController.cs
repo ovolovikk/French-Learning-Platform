@@ -253,6 +253,16 @@ public class TestsController : Controller
         var test = await _context.Tests.FindAsync(id);
         if (test != null)
         {
+            // Remove dependent attempts first to satisfy FK constraint test_id_fkey.
+            var attempts = await _context.TestAttempts
+                .Where(a => a.TestId == id)
+                .ToListAsync();
+
+            if (attempts.Count > 0)
+            {
+                _context.TestAttempts.RemoveRange(attempts);
+            }
+
             _context.Tests.Remove(test);
             await _context.SaveChangesAsync();
         }

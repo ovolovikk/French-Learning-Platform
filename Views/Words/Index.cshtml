@@ -20,6 +20,11 @@
             <a asp-controller="Categories" asp-action="Details" asp-route-id="@ViewBag.CategoryId" class="btn btn-outline-secondary">← Категорія</a>
         }
         <a asp-action="ImportCsv" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-outline-success">⬆ Імпорт CSV</a>
+        <a asp-action="Export"
+           asp-route-categoryId="@ViewBag.CategoryId"
+           asp-route-searchString="@ViewBag.SearchString"
+           asp-route-difficulty="@ViewBag.Difficulty"
+           class="btn btn-outline-primary">⬇ Експорт Excel</a>
         <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">+ Нове слово</a>
     </div>
 </div>

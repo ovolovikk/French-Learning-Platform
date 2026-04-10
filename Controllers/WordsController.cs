@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
 
@@ -273,6 +274,80 @@ public class WordsController : Controller
             (skipped > 0 ? $" Пропущено некоректних рядків: {skipped}." : "");
 
         return RedirectToAction(nameof(Index), new { categoryId });
+    }
+
+    // GET: Words/Export
+    [HttpGet]
+    public async Task<IActionResult> Export(
+        int? categoryId,
+        string? searchString,
+        int? difficulty,
+        [FromQuery] string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        CancellationToken cancellationToken = default)
+    {
+        if (!string.Equals(contentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("Підтримується лише формат .xlsx");
+        }
+
+        var wordsQuery = _context.Words
+            .AsNoTracking()
+            .Include(w => w.Category)
+            .AsQueryable();
+
+        if (categoryId.HasValue)
+        {
+            wordsQuery = wordsQuery.Where(w => w.CategoryId == categoryId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            wordsQuery = wordsQuery.Where(w =>
+                (w.FrenchTerm != null && w.FrenchTerm.Contains(searchString)) ||
+                (w.Translation != null && w.Translation.Contains(searchString)));
+        }
+
+        if (difficulty.HasValue)
+        {
+            wordsQuery = wordsQuery.Where(w => w.DifficultyLevel == difficulty);
+        }
+
+        var words = await wordsQuery
+            .OrderBy(w => w.Category!.Name)
+            .ThenBy(w => w.FrenchTerm)
+            .ToListAsync(cancellationToken);
+
+        await using var memoryStream = new MemoryStream();
+
+        using (var workbook = new XLWorkbook())
+        {
+            var worksheet = workbook.Worksheets.Add("Words");
+
+            worksheet.Cell(1, 1).Value = "French";
+            worksheet.Cell(1, 2).Value = "Translation";
+            worksheet.Cell(1, 3).Value = "Difficulty";
+            worksheet.Cell(1, 4).Value = "Category";
+
+            worksheet.Row(1).Style.Font.Bold = true;
+
+            var row = 2;
+            foreach (var word in words)
+            {
+                worksheet.Cell(row, 1).Value = word.FrenchTerm ?? string.Empty;
+                worksheet.Cell(row, 2).Value = word.Translation ?? string.Empty;
+                worksheet.Cell(row, 3).Value = word.DifficultyLevel;
+                worksheet.Cell(row, 4).Value = word.Category?.Name ?? string.Empty;
+                row++;
+            }
+
+            worksheet.Columns(1, 4).AdjustToContents();
+            workbook.SaveAs(memoryStream);
+        }
+
+        memoryStream.Position = 0;
+
+        var fileName = $"words_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+        return File(memoryStream.ToArray(), contentType, fileName);
     }
 
     private bool WordExists(int id)
