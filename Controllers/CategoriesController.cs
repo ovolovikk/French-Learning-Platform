@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
+[Authorize]
 public class CategoriesController : Controller
 {
     private readonly FrenchLearningPlatformDbContext _context;
@@ -41,6 +44,7 @@ public class CategoriesController : Controller
     }
 
     // GET: Categories/Create
+    [Authorize(Roles = AppRoles.Teacher)]
     public IActionResult Create()
     {
         return View();
@@ -49,6 +53,7 @@ public class CategoriesController : Controller
     // POST: Categories/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Create([Bind("Name,Description")] Category category)
     {
         if (ModelState.IsValid)
@@ -61,6 +66,7 @@ public class CategoriesController : Controller
     }
 
     // GET: Categories/Edit/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -74,6 +80,7 @@ public class CategoriesController : Controller
     // POST: Categories/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description")] Category category)
     {
         if (id != category.Id) return NotFound();
@@ -98,6 +105,7 @@ public class CategoriesController : Controller
     }
 
     // GET: Categories/Delete/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -113,29 +121,45 @@ public class CategoriesController : Controller
     // POST: Categories/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _context.TestAttempts.Where(ta => ta.Test.CategoryId == id).ExecuteDeleteAsync();
-        await _context.Favorites.Where(f => f.Word.CategoryId == id).ExecuteDeleteAsync();
+        var testIds = _context.Tests
+            .Where(t => t.CategoryId == id)
+            .Select(t => t.Id);
+
+        await _context.TestAttempts
+            .Where(ta => ta.TestId.HasValue && testIds.Contains(ta.TestId.Value))
+            .ExecuteDeleteAsync();
+
+        var wordIds = _context.Words
+            .Where(w => w.CategoryId == id)
+            .Select(w => w.Id);
+
+        await _context.Favorites
+            .Where(f => wordIds.Contains(f.WordId))
+            .ExecuteDeleteAsync();
+
         await _context.Words.Where(w => w.CategoryId == id).ExecuteDeleteAsync();
         await _context.Tests.Where(t => t.CategoryId == id).ExecuteDeleteAsync();
+        await _context.Categories.Where(c => c.Id == id).ExecuteDeleteAsync();
 
-        var category = await _context.Categories.FindAsync(id);
-        if (category != null)
-        {
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-        }
         return RedirectToAction(nameof(Index));
     }
 
     // POST: Categories/ClearWords/5  — видаляє всі слова категорії
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> ClearWords(int id)
     {
-        // Перед видаленням слів, треба видалити їх із улюблених
-        await _context.Favorites.Where(f => f.Word.CategoryId == id).ExecuteDeleteAsync();
+        var wordIds = _context.Words
+            .Where(w => w.CategoryId == id)
+            .Select(w => w.Id);
+
+        await _context.Favorites
+            .Where(f => wordIds.Contains(f.WordId))
+            .ExecuteDeleteAsync();
 
         var count = await _context.Words
             .Where(w => w.CategoryId == id)

@@ -5,11 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Roles = AppRoles.Teacher)]
 public class ChartsController : ControllerBase
 {
     private record TestAttemptCountResponseItem(string Date, int Count);

@@ -38,7 +38,16 @@
     </dd>
 
     <dt class="col-sm-3">Студент</dt>
-    <dd class="col-sm-9">@Model.User?.Email</dd>
+    <dd class="col-sm-9">
+        @if (!string.IsNullOrWhiteSpace(Model.User?.FirstName) || !string.IsNullOrWhiteSpace(Model.User?.LastName))
+        {
+            @($"{Model.User?.FirstName} {Model.User?.LastName}".Trim())
+        }
+        else
+        {
+            @Model.User?.Email
+        }
+    </dd>
 
     <dt class="col-sm-3">Тест</dt>
     <dd class="col-sm-9">
@@ -92,6 +101,9 @@ else if (totalWords > 0)
 }
 
 <div class="d-flex gap-2 mt-4">
-    <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.TestId" class="btn btn-primary">🔄 Спробувати ще раз</a>
+    @if (User.IsInRole(AppRoles.Student))
+    {
+        <a asp-controller="Tests" asp-action="Take" asp-route-id="@Model.TestId" class="btn btn-primary">🔄 Спробувати ще раз</a>
+    }
     <a asp-action="Index" asp-route-testId="@Model.TestId" class="btn btn-secondary">← Всі спроби</a>
 </div>

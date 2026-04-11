@@ -19,22 +19,62 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Categories" asp-action="Index">🗂 Категорії</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Words" asp-action="Index">📚 Словник</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Tests" asp-action="Index">📝 Тести</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="TestAttempts" asp-action="Index">📊 Результати</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Favorites" asp-action="Index">⭐ Улюблені</a>
-                        </li>
+                    <ul class="navbar-nav me-auto">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Categories" asp-action="Index">🗂 Категорії</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Words" asp-action="Index">📚 Словник</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Tests" asp-action="Index">📝 Тести</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="TestAttempts" asp-action="Index">📊 Результати</a>
+                            </li>
+                            @if (User.IsInRole(AppRoles.Teacher))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-light" asp-area="" asp-controller="Roles" asp-action="Index">👥 Користувачі</a>
+                                </li>
+                            }
+                            @if (User.IsInRole(AppRoles.Student))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-light" asp-area="" asp-controller="Favorites" asp-action="Index">⭐ Улюблені</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <span class="text-light small">@User.Identity.Name</span>
+                            </li>
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <span class="badge @(User.IsInRole(AppRoles.Teacher) ? "bg-warning text-dark" : "bg-info text-dark")">
+                                    @(User.IsInRole(AppRoles.Teacher) ? "Teacher" : "Student")
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-light btn-sm">Вихід</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Вхід</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Register">Реєстрація</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

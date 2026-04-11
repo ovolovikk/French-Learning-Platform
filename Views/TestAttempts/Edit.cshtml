@@ -14,13 +14,10 @@
             <input type="hidden" asp-for="Id" />
 
             <div class="mb-3">
-                <label asp-for="UserId" class="form-label"></label>
-                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId"></select>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="TestId" class="form-label"></label>
-                <select asp-for="TestId" class="form-select" asp-items="ViewBag.TestId"></select>
+                <label asp-for="TestId" class="form-label">Тест</label>
+                <select asp-for="TestId" class="form-select" asp-items="ViewBag.Tests">
+                    <option value="">— оберіть тест —</option>
+                </select>
             </div>
 
             <div class="mb-3">

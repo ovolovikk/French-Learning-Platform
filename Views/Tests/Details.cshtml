@@ -22,8 +22,14 @@
 </dl>
 
 <div class="d-flex gap-2 mb-4">
-    <a asp-action="Take" asp-route-id="@Model.Id" class="btn btn-success btn-lg">▶ Пройти тест</a>
+    @if (User.IsInRole(AppRoles.Student))
+    {
+        <a asp-action="Take" asp-route-id="@Model.Id" class="btn btn-success btn-lg">▶ Пройти тест</a>
+    }
     <a asp-controller="TestAttempts" asp-action="Index" asp-route-testId="@Model.Id" class="btn btn-info">📊 Результати (@Model.TestAttempts.Count)</a>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+    }
     <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-secondary">← Назад до тестів</a>
 </div>

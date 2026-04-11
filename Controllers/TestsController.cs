@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
+[Authorize]
 public class TestsController : Controller
 {
     private readonly FrenchLearningPlatformDbContext _context;
@@ -15,25 +18,8 @@ public class TestsController : Controller
         _context = context;
     }
 
-    private async Task<int> GetOrCreateGuestUserIdAsync()
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == "guest@example.com");
-        if (user == null)
-        {
-            user = new User
-            {
-                Email = "guest@example.com",
-                PasswordHash = "guest_hash",
-                Role = "Student",
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-        }
-        return user.Id;
-    }
-
     // GET: Tests/Take/5
+    [Authorize(Roles = AppRoles.Student)]
     public async Task<IActionResult> Take(int? id)
     {
         if (id == null) return NotFound();
@@ -65,10 +51,17 @@ public class TestsController : Controller
     // POST: Tests/SubmitTest
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Student)]
     public async Task<IActionResult> SubmitTest(int testId, IFormCollection form)
     {
         var test = await _context.Tests.FindAsync(testId);
         if (test == null) return NotFound();
+
+        var userId = User.GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Challenge();
+        }
 
         int score = 0;
         var mistakes = new List<object>();
@@ -104,12 +97,10 @@ public class TestsController : Controller
             }
         }
 
-        var userId = await GetOrCreateGuestUserIdAsync();
-
         var attempt = new TestAttempt
         {
             TestId = testId,
-            UserId = userId,
+            UserId = userId.Value,
             Score = score,
             MistakesJsonb = mistakes.Any() ? System.Text.Json.JsonSerializer.Serialize(mistakes) : null,
             CompletedAt = DateTime.UtcNow
@@ -153,6 +144,7 @@ public class TestsController : Controller
     }
 
     // GET: Tests/Create?categoryId=5
+    [Authorize(Roles = AppRoles.Teacher)]
     public IActionResult Create(int? categoryId)
     {
         ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", categoryId);
@@ -163,15 +155,9 @@ public class TestsController : Controller
     // POST: Tests/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Create([Bind("CategoryId,Words,Title,TimeLimitSeconds")] Test test)
     {
-        // Fix: load Category navigation property
-        if (test.CategoryId.HasValue)
-        {
-            test.Category = await _context.Categories.FindAsync(test.CategoryId.Value);
-            ModelState.Remove(nameof(test.Category));
-        }
-
         if (ModelState.IsValid)
         {
             _context.Add(test);
@@ -185,6 +171,7 @@ public class TestsController : Controller
     }
 
     // GET: Tests/Edit/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -199,16 +186,10 @@ public class TestsController : Controller
     // POST: Tests/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,CategoryId,Words,Title,TimeLimitSeconds")] Test test)
     {
         if (id != test.Id) return NotFound();
-
-        // Fix: load Category navigation property
-        if (test.CategoryId.HasValue)
-        {
-            test.Category = await _context.Categories.FindAsync(test.CategoryId.Value);
-            ModelState.Remove(nameof(test.Category));
-        }
 
         if (ModelState.IsValid)
         {
@@ -232,6 +213,7 @@ public class TestsController : Controller
     }
 
     // GET: Tests/Delete/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -248,24 +230,17 @@ public class TestsController : Controller
     // POST: Tests/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var test = await _context.Tests.FindAsync(id);
-        if (test != null)
-        {
-            // Remove dependent attempts first to satisfy FK constraint test_id_fkey.
-            var attempts = await _context.TestAttempts
-                .Where(a => a.TestId == id)
-                .ToListAsync();
+        await _context.TestAttempts
+            .Where(a => a.TestId == id)
+            .ExecuteDeleteAsync();
 
-            if (attempts.Count > 0)
-            {
-                _context.TestAttempts.RemoveRange(attempts);
-            }
+        await _context.Tests
+            .Where(t => t.Id == id)
+            .ExecuteDeleteAsync();
 
-            _context.Tests.Remove(test);
-            await _context.SaveChangesAsync();
-        }
         return RedirectToAction(nameof(Index));
     }
 

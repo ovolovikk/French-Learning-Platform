@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
+[Authorize]
 public class TestAttemptsController : Controller
 {
     private readonly FrenchLearningPlatformDbContext _context;
@@ -20,7 +23,19 @@ public class TestAttemptsController : Controller
     {
         var attempts = _context.TestAttempts
             .Include(ta => ta.Test)
+            .Include(ta => ta.User)
             .AsQueryable();
+
+        if (!User.IsInRole(AppRoles.Teacher))
+        {
+            var currentUserId = User.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Challenge();
+            }
+
+            attempts = attempts.Where(ta => ta.UserId == currentUserId.Value);
+        }
 
         if (testId.HasValue)
         {
@@ -30,7 +45,9 @@ public class TestAttemptsController : Controller
             ViewBag.TestTitle = test?.Title;
         }
 
-        return View(await attempts.ToListAsync());
+        return View(await attempts
+            .OrderByDescending(ta => ta.CompletedAt)
+            .ToListAsync());
     }
 
     // GET: TestAttempts/Details/5
@@ -40,14 +57,30 @@ public class TestAttemptsController : Controller
 
         var attempt = await _context.TestAttempts
             .Include(ta => ta.Test)
+            .Include(ta => ta.User)
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (attempt == null) return NotFound();
+
+        if (!User.IsInRole(AppRoles.Teacher))
+        {
+            var currentUserId = User.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Challenge();
+            }
+
+            if (attempt.UserId != currentUserId.Value)
+            {
+                return Forbid();
+            }
+        }
 
         return View(attempt);
     }
 
     // GET: TestAttempts/Create?testId=5
+    [Authorize(Roles = AppRoles.Teacher)]
     public IActionResult Create(int? testId)
     {
         ViewBag.Tests = new SelectList(_context.Tests, "Id", "Title", testId);
@@ -58,18 +91,9 @@ public class TestAttemptsController : Controller
     // POST: TestAttempts/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Create([Bind("TestId,Score,MistakesJsonb")] TestAttempt attempt)
     {
-        // Load Test nav property so ModelState passes
-        if (attempt.TestId.HasValue)
-        {
-            attempt.Test = await _context.Tests.FindAsync(attempt.TestId.Value);
-            ModelState.Remove(nameof(attempt.Test));
-        }
-        // UserId is not required when auth is not implemented
-        ModelState.Remove(nameof(attempt.User));
-        ModelState.Remove(nameof(attempt.UserId));
-
         if (ModelState.IsValid)
         {
             attempt.CompletedAt = DateTime.UtcNow;
@@ -83,6 +107,7 @@ public class TestAttemptsController : Controller
     }
 
     // GET: TestAttempts/Edit/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -97,17 +122,10 @@ public class TestAttemptsController : Controller
     // POST: TestAttempts/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,TestId,Score,MistakesJsonb,CompletedAt")] TestAttempt attempt)
     {
         if (id != attempt.Id) return NotFound();
-
-        if (attempt.TestId.HasValue)
-        {
-            attempt.Test = await _context.Tests.FindAsync(attempt.TestId.Value);
-            ModelState.Remove(nameof(attempt.Test));
-        }
-        ModelState.Remove(nameof(attempt.User));
-        ModelState.Remove(nameof(attempt.UserId));
 
         if (ModelState.IsValid)
         {
@@ -129,12 +147,14 @@ public class TestAttemptsController : Controller
     }
 
     // GET: TestAttempts/Delete/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
         var attempt = await _context.TestAttempts
             .Include(ta => ta.Test)
+            .Include(ta => ta.User)
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (attempt == null) return NotFound();
@@ -145,6 +165,7 @@ public class TestAttemptsController : Controller
     // POST: TestAttempts/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var attempt = await _context.TestAttempts.FindAsync(id);

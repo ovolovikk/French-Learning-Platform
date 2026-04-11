@@ -6,6 +6,12 @@ namespace FrenchLearningPlatform.Domain.Model;
 
 public partial class User : BaseEntity
 {
+    [Display(Name = "Ім'я")]
+    public string? FirstName { get; set; }
+
+    [Display(Name = "Прізвище")]
+    public string? LastName { get; set; }
+
     [Required(ErrorMessage = "Email є обов'язковим")]
     [EmailAddress(ErrorMessage = "Некоректний формат Email")]
     [Display(Name = "Email")]

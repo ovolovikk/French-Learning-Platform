@@ -4,9 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
+[Authorize]
 public class WordsController : Controller
 {
     private readonly FrenchLearningPlatformDbContext _context;
@@ -41,15 +44,23 @@ public class WordsController : Controller
             ViewBag.Difficulty = difficulty;
         }
 
-        // Load favorite word IDs for ⭐ button state
-        var firstUser = await _context.Users.FirstOrDefaultAsync();
-        if (firstUser != null)
+        // Favorite button is available only for students.
+        ViewBag.CanUseFavorites = User.IsInRole(AppRoles.Student);
+        if (User.IsInRole(AppRoles.Student))
         {
-            var favIds = await _context.Favorites
-                .Where(f => f.UserId == firstUser.Id)
-                .Select(f => f.WordId)
-                .ToHashSetAsync();
-            ViewBag.FavoriteWordIds = favIds;
+            var currentUserId = User.GetCurrentUserId();
+            if (currentUserId.HasValue)
+            {
+                var favIds = await _context.Favorites
+                    .Where(f => f.UserId == currentUserId.Value)
+                    .Select(f => f.WordId)
+                    .ToHashSetAsync();
+                ViewBag.FavoriteWordIds = favIds;
+            }
+            else
+            {
+                ViewBag.FavoriteWordIds = new HashSet<int>();
+            }
         }
         else
         {
@@ -79,6 +90,7 @@ public class WordsController : Controller
     }
 
     // GET: Words/Create  OR  Words/Create?categoryId=5
+    [Authorize(Roles = AppRoles.Teacher)]
     public IActionResult Create(int? categoryId)
     {
         ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", categoryId);
@@ -89,15 +101,9 @@ public class WordsController : Controller
     // POST: Words/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Create([Bind("CategoryId,FrenchTerm,Translation,DifficultyLevel")] Word word)
     {
-        // Fix: load Category navigation property so ModelState validation passes
-        if (word.CategoryId.HasValue)
-        {
-            word.Category = await _context.Categories.FindAsync(word.CategoryId.Value);
-            ModelState.Remove(nameof(word.Category));
-        }
-
         if (ModelState.IsValid)
         {
             _context.Add(word);
@@ -111,6 +117,7 @@ public class WordsController : Controller
     }
 
     // GET: Words/Edit/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -125,16 +132,10 @@ public class WordsController : Controller
     // POST: Words/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,CategoryId,FrenchTerm,Translation,DifficultyLevel")] Word word)
     {
         if (id != word.Id) return NotFound();
-
-        // Fix: load Category navigation property so ModelState validation passes
-        if (word.CategoryId.HasValue)
-        {
-            word.Category = await _context.Categories.FindAsync(word.CategoryId.Value);
-            ModelState.Remove(nameof(word.Category));
-        }
 
         if (ModelState.IsValid)
         {
@@ -158,6 +159,7 @@ public class WordsController : Controller
     }
 
     // GET: Words/Delete/5
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -174,25 +176,22 @@ public class WordsController : Controller
     // POST: Words/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var word = await _context.Words.FindAsync(id);
-        if (word != null)
-        {
-            var favorites = await _context.Favorites.Where(f => f.WordId == id).ToListAsync();
-            if (favorites.Any())
-            {
-                _context.Favorites.RemoveRange(favorites);
-                await _context.SaveChangesAsync();
-            }
+        await _context.Favorites
+            .Where(f => f.WordId == id)
+            .ExecuteDeleteAsync();
 
-            _context.Words.Remove(word);
-            await _context.SaveChangesAsync();
-        }
+        await _context.Words
+            .Where(w => w.Id == id)
+            .ExecuteDeleteAsync();
+
         return RedirectToAction(nameof(Index));
     }
 
     // GET: Words/ImportCsv
+    [Authorize(Roles = AppRoles.Teacher)]
     public IActionResult ImportCsv(int? categoryId)
     {
         ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", categoryId);
@@ -203,6 +202,7 @@ public class WordsController : Controller
     // POST: Words/ImportCsv
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> ImportCsv(int? categoryId, IFormFile csvFile)
     {
         if (csvFile == null || csvFile.Length == 0)
@@ -278,6 +278,7 @@ public class WordsController : Controller
 
     // GET: Words/Export
     [HttpGet]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Export(
         int? categoryId,
         string? searchString,

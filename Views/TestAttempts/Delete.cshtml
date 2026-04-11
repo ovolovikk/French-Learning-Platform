@@ -9,7 +9,16 @@
 
 <dl class="row">
     <dt class="col-sm-3">Студент</dt>
-    <dd class="col-sm-9">@Model.User?.Email</dd>
+    <dd class="col-sm-9">
+        @if (!string.IsNullOrWhiteSpace(Model.User?.FirstName) || !string.IsNullOrWhiteSpace(Model.User?.LastName))
+        {
+            @($"{Model.User?.FirstName} {Model.User?.LastName}".Trim())
+        }
+        else
+        {
+            @Model.User?.Email
+        }
+    </dd>
 
     <dt class="col-sm-3">Тест</dt>
     <dd class="col-sm-9">@Model.Test?.Title</dd>

@@ -19,13 +19,16 @@
         {
             <a asp-controller="Categories" asp-action="Details" asp-route-id="@ViewBag.CategoryId" class="btn btn-outline-secondary">← Категорія</a>
         }
-        <a asp-action="ImportCsv" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-outline-success">⬆ Імпорт CSV</a>
-        <a asp-action="Export"
-           asp-route-categoryId="@ViewBag.CategoryId"
-           asp-route-searchString="@ViewBag.SearchString"
-           asp-route-difficulty="@ViewBag.Difficulty"
-           class="btn btn-outline-primary">⬇ Експорт Excel</a>
-        <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">+ Нове слово</a>
+        @if (User.IsInRole(AppRoles.Teacher))
+        {
+            <a asp-action="ImportCsv" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-outline-success">⬆ Імпорт CSV</a>
+            <a asp-action="Export"
+               asp-route-categoryId="@ViewBag.CategoryId"
+               asp-route-searchString="@ViewBag.SearchString"
+               asp-route-difficulty="@ViewBag.Difficulty"
+               class="btn btn-outline-primary">⬇ Експорт Excel</a>
+            <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">+ Нове слово</a>
+        }
     </div>
 </div>
 
@@ -101,17 +104,23 @@
                     </a>
                 </td>
                 <td>
-                    <form asp-controller="Favorites" asp-action="Toggle" method="post" class="d-inline">
-                        <input type="hidden" name="wordId" value="@item.Id" />
-                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                        @{
-                            bool isFav = (ViewBag.FavoriteWordIds as HashSet<int>)?.Contains(item.Id) == true;
-                        }
-                        <button type="submit" class="btn btn-sm @(isFav ? "btn-warning" : "btn-outline-secondary")" title="@(isFav ? "Прибрати з улюблених" : "До улюблених")">⭐</button>
-                    </form>
+                    @if (ViewBag.CanUseFavorites == true)
+                    {
+                        <form asp-controller="Favorites" asp-action="Toggle" method="post" class="d-inline">
+                            <input type="hidden" name="wordId" value="@item.Id" />
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                            @{
+                                bool isFav = (ViewBag.FavoriteWordIds as HashSet<int>)?.Contains(item.Id) == true;
+                            }
+                            <button type="submit" class="btn btn-sm @(isFav ? "btn-warning" : "btn-outline-secondary")" title="@(isFav ? "Прибрати з улюблених" : "До улюблених")">⭐</button>
+                        </form>
+                    }
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Деталі</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Редагувати</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Видалити</a>
+                    @if (User.IsInRole(AppRoles.Teacher))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Редагувати</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Видалити</a>
+                    }
                 </td>
             </tr>
         }

@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
+using FrenchLearningPlatform.Domain.Model;
+using French_Learning_Platform.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace French_Learning_Platform.Controllers;
 
+[Authorize(Roles = AppRoles.Student)]
 public class FavoritesController : Controller
 {
     private readonly FrenchLearningPlatformDbContext _context;
@@ -17,10 +20,14 @@ public class FavoritesController : Controller
     // GET: Favorites — список усіх улюблених слів
     public async Task<IActionResult> Index()
     {
-        var userId = await GetOrCreateGuestUserIdAsync();
+        var userId = User.GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Challenge();
+        }
 
         var favorites = await _context.Favorites
-            .Where(f => f.UserId == userId)
+            .Where(f => f.UserId == userId.Value)
             .Include(f => f.Word)
                 .ThenInclude(w => w!.Category)
             .OrderByDescending(f => f.AddedAt)
@@ -34,10 +41,14 @@ public class FavoritesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int wordId, string? returnUrl)
     {
-        var userId = await GetOrCreateGuestUserIdAsync();
+        var userId = User.GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Challenge();
+        }
 
         var existing = await _context.Favorites
-            .FirstOrDefaultAsync(f => f.UserId == userId && f.WordId == wordId);
+            .FirstOrDefaultAsync(f => f.UserId == userId.Value && f.WordId == wordId);
 
         if (existing != null)
         {
@@ -48,7 +59,7 @@ public class FavoritesController : Controller
         {
             _context.Favorites.Add(new Favorite
             {
-                UserId = userId,
+                UserId = userId.Value,
                 WordId = wordId,
                 AddedAt = DateTime.UtcNow
             });
@@ -61,28 +72,5 @@ public class FavoritesController : Controller
             return Redirect(returnUrl);
 
         return RedirectToAction("Index", "Words");
-    }
-
-    /// <summary>
-    /// Returns the first user's Id, creating a guest system user if DB is empty.
-    /// TODO: REPLACE LATER WITH AUTHENTIFICATED USER
-    /// </summary>
-    private async Task<int> GetOrCreateGuestUserIdAsync()
-    {
-        var user = await _context.Users.FirstOrDefaultAsync();
-        if (user != null) return user.Id;
-
-        // No users yet — create a guest placeholder
-        user = new User
-        {
-            Email = "guest@system.local",
-            PasswordHash = "placeholder",
-            Role = "Student",
-            CreatedAt = DateTime.UtcNow,
-            IsEmailConfirmed = false
-        };
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-        return user.Id;
     }
 }

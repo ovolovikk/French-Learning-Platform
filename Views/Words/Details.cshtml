@@ -28,7 +28,10 @@
 </dl>
 
 <div class="d-flex gap-2">
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
-    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Видалити</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Видалити</a>
+    }
     <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-secondary">← Назад до словника</a>
 </div>

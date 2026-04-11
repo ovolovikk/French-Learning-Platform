@@ -12,12 +12,18 @@
 </dl>
 
 <div class="d-flex gap-2 mb-4">
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Редагувати</a>
+    }
     <a asp-action="Index" class="btn btn-secondary">← Назад до списку</a>
-    <form asp-action="ClearWords" asp-route-id="@Model.Id" method="post" class="d-inline"
-          onsubmit="return confirm('Видалити всі слова категорії «@Model.Name»?');">
-        <button type="submit" class="btn btn-outline-danger">🗑 Очистити всі слова</button>
-    </form>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <form asp-action="ClearWords" asp-route-id="@Model.Id" method="post" class="d-inline"
+              onsubmit="return confirm('Видалити всі слова категорії «@Model.Name»?');">
+            <button type="submit" class="btn btn-outline-danger">🗑 Очистити всі слова</button>
+        </form>
+    }
 </div>
 
 @if (ViewBag.ClearResult != null)
@@ -33,7 +39,10 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Слова у категорії (@Model.Words.Count)</h3>
     <a asp-controller="Words" asp-action="Index" asp-route-categoryId="@Model.Id" class="btn btn-outline-primary">Переглянути всі слова</a>
-    <a asp-controller="Words" asp-action="Create" asp-route-categoryId="@Model.Id" class="btn btn-primary">+ Додати слово</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-controller="Words" asp-action="Create" asp-route-categoryId="@Model.Id" class="btn btn-primary">+ Додати слово</a>
+    }
 </div>
 
 @if (Model.Words.Any())
@@ -67,7 +76,10 @@ else
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Тести у категорії (@Model.Tests.Count)</h3>
-    <a asp-controller="Tests" asp-action="Create" asp-route-categoryId="@Model.Id" class="btn btn-primary">+ Створити тест</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-controller="Tests" asp-action="Create" asp-route-categoryId="@Model.Id" class="btn btn-primary">+ Створити тест</a>
+    }
 </div>
 
 @if (Model.Tests.Any())
@@ -88,7 +100,12 @@ else
                     <td><a asp-controller="Tests" asp-action="Details" asp-route-id="@test.Id">@test.Title</a></td>
                     <td>@test.Words</td>
                     <td>@test.TimeLimitSeconds</td>
-                    <td><a asp-controller="Tests" asp-action="Edit" asp-route-id="@test.Id" class="btn btn-sm btn-warning">Редагувати</a></td>
+                    <td>
+                        @if (User.IsInRole(AppRoles.Teacher))
+                        {
+                            <a asp-controller="Tests" asp-action="Edit" asp-route-id="@test.Id" class="btn btn-sm btn-warning">Редагувати</a>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>

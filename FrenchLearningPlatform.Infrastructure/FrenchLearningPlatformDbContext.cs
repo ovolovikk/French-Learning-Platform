@@ -146,7 +146,13 @@ public partial class FrenchLearningPlatformDbContext : DbContext
             entity.Property(e => e.Email)
                 .HasColumnType("character varying")
                 .HasColumnName("email");
+            entity.Property(e => e.FirstName)
+                .HasColumnType("character varying")
+                .HasColumnName("first_name");
             entity.Property(e => e.IsEmailConfirmed).HasColumnName("is_email_confirmed");
+            entity.Property(e => e.LastName)
+                .HasColumnType("character varying")
+                .HasColumnName("last_name");
             entity.Property(e => e.PasswordHash)
                 .HasColumnType("character varying")
                 .HasColumnName("password_hash");

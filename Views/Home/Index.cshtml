@@ -1,8 +1,31 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "French Learning Platform";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center py-4">
+    <h1 class="display-5 mb-3">French Learning Platform</h1>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p class="lead mb-3">Ви увійшли як <strong>@User.Identity.Name</strong>.</p>
+
+        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+            <a asp-controller="Categories" asp-action="Index" class="btn btn-primary">Перейти до категорій</a>
+            <a asp-controller="Tests" asp-action="Index" class="btn btn-outline-success">Перейти до тестів</a>
+            <a asp-controller="TestAttempts" asp-action="Index" class="btn btn-outline-info">Перейти до результатів</a>
+            @if (User.IsInRole(AppRoles.Teacher))
+            {
+                <a asp-controller="Roles" asp-action="Index" class="btn btn-outline-warning">Керування ролями</a>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="lead mb-4">Увійдіть в систему, щоб працювати з платформою.</p>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Вхід</a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary">Реєстрація</a>
+        </div>
+    }
 </div>

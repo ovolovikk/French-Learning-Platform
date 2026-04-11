@@ -12,7 +12,10 @@
             <small class="text-muted fs-5">— @ViewBag.TestTitle</small>
         }
     </h1>
-    <a asp-action="Create" asp-route-testId="@ViewBag.TestId" class="btn btn-primary">+ Нова спроба</a>
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <a asp-action="Create" asp-route-testId="@ViewBag.TestId" class="btn btn-primary">+ Нова спроба</a>
+    }
 </div>
 
 <table class="table table-striped table-hover">
@@ -45,7 +48,16 @@
             int pct = tot > 0 ? (int)Math.Round((double)correctAnsw / tot * 100) : 0;
 
             <tr>
-                <td>@item.User?.Email</td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(item.User?.FirstName) || !string.IsNullOrWhiteSpace(item.User?.LastName))
+                    {
+                        @($"{item.User?.FirstName} {item.User?.LastName}".Trim())
+                    }
+                    else
+                    {
+                        @item.User?.Email
+                    }
+                </td>
                 <td>
                     <span class="badge @(pct >= 80 ? "bg-success" : pct >= 50 ? "bg-warning text-dark" : "bg-danger")">
                         @correctAnsw / @(tot > 0 ? tot.ToString() : "?") (@pct%)
@@ -59,85 +71,94 @@
                 <td>@item.CompletedAt?.ToString("dd.MM.yyyy HH:mm")</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Деталі</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Видалити</a>
+                    @if (User.IsInRole(AppRoles.Teacher))
+                    {
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Видалити</a>
+                    }
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
-<div class="row mt-5 mb-4">
-    <div class="col-md-6">
-        <div id="attemptsByDateChart" style="height: 400px; width: 100%;"></div>
+@if (User.IsInRole(AppRoles.Teacher))
+{
+    <div class="row mt-5 mb-4">
+        <div class="col-md-6">
+            <div id="attemptsByDateChart" style="height: 400px; width: 100%;"></div>
+        </div>
+        <div class="col-md-6">
+            <div id="averageScoreByTestChart" style="height: 400px; width: 100%;"></div>
+        </div>
     </div>
-    <div class="col-md-6">
-        <div id="averageScoreByTestChart" style="height: 400px; width: 100%;"></div>
-    </div>
-</div>
+}
 
 @section Scripts
 {
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawCharts);
+    @if (User.IsInRole(AppRoles.Teacher))
+    {
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawCharts);
 
-        function drawCharts() {
-            // Діаграма 1: Кількість спроб по днях
-            fetch('/api/charts/attemptsByDate')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) return;
+            function drawCharts() {
+                // Діаграма 1: Кількість спроб по днях
+                fetch('/api/charts/attemptsByDate')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) return;
 
-                    const dataTable = new google.visualization.DataTable();
-                    dataTable.addColumn('string', 'Дата');
-                    dataTable.addColumn('number', 'Кількість спроб');
+                        const dataTable = new google.visualization.DataTable();
+                        dataTable.addColumn('string', 'Дата');
+                        dataTable.addColumn('number', 'Кількість спроб');
 
-                    data.forEach(item => {
-                        dataTable.addRow([item.date, item.count]);
+                        data.forEach(item => {
+                            dataTable.addRow([item.date, item.count]);
+                        });
+
+                        const options = {
+                            title: 'Кількість зданих тестів за датами',
+                            legend: { position: 'none' },
+                            backgroundColor: 'transparent',
+                            colors: ['#0dcaf0'],
+                            titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
+                            hAxis: { textStyle: { color: '#adb5bd' } },
+                            vAxis: { textStyle: { color: '#adb5bd' } }
+                        };
+
+                        const chart = new google.visualization.ColumnChart(document.getElementById('attemptsByDateChart'));
+                        chart.draw(dataTable, options);
                     });
 
-                    const options = {
-                        title: 'Кількість зданих тестів за датами',
-                        legend: { position: 'none' },
-                        backgroundColor: 'transparent',
-                        colors: ['#0dcaf0'], // блакитний/cyan колір колонок
-                        titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
-                        hAxis: { textStyle: { color: '#adb5bd' } },
-                        vAxis: { textStyle: { color: '#adb5bd' } }
-                    };
+                // Діаграма 2: Середній бал по кожному тесту
+                fetch('/api/charts/averageScoreByTest')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) return;
 
-                    const chart = new google.visualization.ColumnChart(document.getElementById('attemptsByDateChart'));
-                    chart.draw(dataTable, options);
-                });
+                        const dataTable = new google.visualization.DataTable();
+                        dataTable.addColumn('string', 'Тест');
+                        dataTable.addColumn('number', 'Середній бал');
 
-            // Діаграма 2: Середній бал по кожному тесту
-            fetch('/api/charts/averageScoreByTest')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) return;
+                        data.forEach(item => {
+                            dataTable.addRow([item.testTitle, item.averageScore]);
+                        });
 
-                    const dataTable = new google.visualization.DataTable();
-                    dataTable.addColumn('string', 'Тест');
-                    dataTable.addColumn('number', 'Середній бал');
+                        const options = {
+                            title: 'Середній бал за тестами',
+                            legend: { position: 'none' },
+                            backgroundColor: 'transparent',
+                            colors: ['#fd7e14'],
+                            titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
+                            hAxis: { textStyle: { color: '#adb5bd' } },
+                            vAxis: { textStyle: { color: '#adb5bd' } }
+                        };
 
-                    data.forEach(item => {
-                        dataTable.addRow([item.testTitle, item.averageScore]);
+                        const chart = new google.visualization.ColumnChart(document.getElementById('averageScoreByTestChart'));
+                        chart.draw(dataTable, options);
                     });
-
-                    const options = {
-                        title: 'Середній бал за тестами',
-                        legend: { position: 'none' },
-                        backgroundColor: 'transparent',
-                        colors: ['#fd7e14'], // помаранчевий колір колонок
-                        titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
-                        hAxis: { textStyle: { color: '#adb5bd' } },
-                        vAxis: { textStyle: { color: '#adb5bd' } }
-                    };
-
-                    const chart = new google.visualization.ColumnChart(document.getElementById('averageScoreByTestChart'));
-                    chart.draw(dataTable, options);
-                });
-        }
-    </script>
+            }
+        </script>
+    }
 }
