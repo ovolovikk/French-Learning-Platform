@@ -139,20 +139,25 @@
 
                         const dataTable = new google.visualization.DataTable();
                         dataTable.addColumn('string', 'Тест');
-                        dataTable.addColumn('number', 'Середній бал');
+                        dataTable.addColumn('number', 'Середній бал (0-10)');
 
                         data.forEach(item => {
                             dataTable.addRow([item.testTitle, item.averageScore]);
                         });
 
                         const options = {
-                            title: 'Середній бал за тестами',
+                            title: 'Середній бал за тестами (0-10)',
                             legend: { position: 'none' },
                             backgroundColor: 'transparent',
                             colors: ['#fd7e14'],
                             titleTextStyle: { color: '#f8f9fa', fontSize: 16 },
                             hAxis: { textStyle: { color: '#adb5bd' } },
-                            vAxis: { textStyle: { color: '#adb5bd' } }
+                            vAxis: {
+                                textStyle: { color: '#adb5bd' },
+                                minValue: 0,
+                                maxValue: 10,
+                                viewWindow: { min: 0, max: 10 }
+                            }
                         };
 
                         const chart = new google.visualization.ColumnChart(document.getElementById('averageScoreByTestChart'));

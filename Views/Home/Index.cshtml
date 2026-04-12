@@ -13,10 +13,6 @@
             <a asp-controller="Categories" asp-action="Index" class="btn btn-primary">Перейти до категорій</a>
             <a asp-controller="Tests" asp-action="Index" class="btn btn-outline-success">Перейти до тестів</a>
             <a asp-controller="TestAttempts" asp-action="Index" class="btn btn-outline-info">Перейти до результатів</a>
-            @if (User.IsInRole(AppRoles.Teacher))
-            {
-                <a asp-controller="Roles" asp-action="Index" class="btn btn-outline-warning">Керування ролями</a>
-            }
         </div>
     }
     else

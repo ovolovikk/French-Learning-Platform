@@ -51,16 +51,37 @@ public class ChartsController : ControllerBase
     [HttpGet("averageScoreByTest")]
     public async Task<JsonResult> GetAverageScoreByTestAsync(CancellationToken cancellationToken)
     {
-        var responseItems = await _context.TestAttempts
+        var attempts = await _context.TestAttempts
             .Include(ta => ta.Test)
             .Where(ta => ta.Test != null && ta.Test.Title != null && ta.Score != null)
-            .GroupBy(ta => ta.Test!.Title)
-            .Select(group => new AverageTestScoreResponseItem(
-                group.Key!,
-                group.Average(ta => ta.Score!.Value)
-            ))
+            .Select(ta => new
+            {
+                TestTitle = ta.Test!.Title!,
+                RawScore = ta.Score!.Value,
+                MaxWords = ta.Test!.Words
+            })
             .ToListAsync(cancellationToken);
 
+        var responseItems = attempts
+            .GroupBy(a => a.TestTitle)
+            .Select(group => new AverageTestScoreResponseItem(
+                group.Key,
+                Math.Round(group.Average(a => NormalizeToTen(a.RawScore, a.MaxWords)), 2)
+            ))
+            .OrderBy(x => x.TestTitle)
+            .ToList();
+
         return new JsonResult(responseItems);
+    }
+
+    private static double NormalizeToTen(int score, int? wordsInTest)
+    {
+        if (!wordsInTest.HasValue || wordsInTest.Value <= 0)
+        {
+            return 0;
+        }
+
+        var normalized = (score * 10.0) / wordsInTest.Value;
+        return Math.Clamp(normalized, 0, 10);
     }
 }

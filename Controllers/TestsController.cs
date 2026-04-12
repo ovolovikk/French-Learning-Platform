@@ -158,6 +158,8 @@ public class TestsController : Controller
     [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Create([Bind("CategoryId,Words,Title,TimeLimitSeconds")] Test test)
     {
+        await ValidateWordsLimitAsync(test);
+
         if (ModelState.IsValid)
         {
             _context.Add(test);
@@ -190,6 +192,8 @@ public class TestsController : Controller
     public async Task<IActionResult> Edit(int id, [Bind("Id,CategoryId,Words,Title,TimeLimitSeconds")] Test test)
     {
         if (id != test.Id) return NotFound();
+
+        await ValidateWordsLimitAsync(test);
 
         if (ModelState.IsValid)
         {
@@ -247,5 +251,29 @@ public class TestsController : Controller
     private bool TestExists(int id)
     {
         return _context.Tests.Any(e => e.Id == id);
+    }
+
+    private async Task ValidateWordsLimitAsync(Test test)
+    {
+        if (!test.CategoryId.HasValue || !test.Words.HasValue)
+        {
+            return;
+        }
+
+        var requestedWordsCount = test.Words.Value;
+        if (requestedWordsCount <= 0)
+        {
+            return;
+        }
+
+        var availableWordsCount = await _context.Words
+            .CountAsync(w => w.CategoryId == test.CategoryId.Value);
+
+        if (requestedWordsCount > availableWordsCount)
+        {
+            ModelState.AddModelError(
+                nameof(test.Words),
+                $"Максимально доступна кількість слів у цій категорії: {availableWordsCount}.");
+        }
     }
 }
