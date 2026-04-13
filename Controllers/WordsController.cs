@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
+using System.Text.RegularExpressions;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
 using French_Learning_Platform.Security;
@@ -20,9 +21,16 @@ public class WordsController : Controller
     }
 
     // GET: Words  OR  Words?categoryId=5
-    public async Task<IActionResult> Index(int? categoryId, string? searchString, int? difficulty)
+    public async Task<IActionResult> Index(int? categoryId, string? searchString, int? difficulty, bool onlyFavorites = false)
     {
         var words = _context.Words.Include(w => w.Category).AsQueryable();
+        var normalizedSearch = NormalizeSearchText(searchString);
+
+        ViewBag.Categories = new SelectList(
+            await _context.Categories.OrderBy(c => c.Name).ToListAsync(),
+            "Id",
+            "Name",
+            categoryId);
 
         if (categoryId.HasValue)
         {
@@ -32,16 +40,32 @@ public class WordsController : Controller
             ViewBag.CategoryName = category?.Name;
         }
 
-        if (!string.IsNullOrEmpty(searchString))
+        if (!string.IsNullOrEmpty(normalizedSearch))
         {
-            words = words.Where(w => w.FrenchTerm!.Contains(searchString) || w.Translation!.Contains(searchString));
-            ViewBag.SearchString = searchString;
+            words = words.Where(w => w.FrenchTerm!.Contains(normalizedSearch) || w.Translation!.Contains(normalizedSearch));
+            ViewBag.SearchString = normalizedSearch;
         }
 
         if (difficulty.HasValue)
         {
             words = words.Where(w => w.DifficultyLevel == difficulty.Value);
             ViewBag.Difficulty = difficulty;
+        }
+
+        if (onlyFavorites && User.IsInRole(AppRoles.Student))
+        {
+            var currentUserId = User.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Challenge();
+            }
+
+            words = words.Where(w => _context.Favorites.Any(f => f.UserId == currentUserId.Value && f.WordId == w.Id));
+            ViewBag.OnlyFavorites = true;
+        }
+        else
+        {
+            ViewBag.OnlyFavorites = false;
         }
 
         // Favorite button is available only for students.
@@ -283,9 +307,12 @@ public class WordsController : Controller
         int? categoryId,
         string? searchString,
         int? difficulty,
+        bool onlyFavorites = false,
         [FromQuery] string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         CancellationToken cancellationToken = default)
     {
+        var normalizedSearch = NormalizeSearchText(searchString);
+
         if (!string.Equals(contentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest("Підтримується лише формат .xlsx");
@@ -301,16 +328,27 @@ public class WordsController : Controller
             wordsQuery = wordsQuery.Where(w => w.CategoryId == categoryId);
         }
 
-        if (!string.IsNullOrWhiteSpace(searchString))
+        if (!string.IsNullOrWhiteSpace(normalizedSearch))
         {
             wordsQuery = wordsQuery.Where(w =>
-                (w.FrenchTerm != null && w.FrenchTerm.Contains(searchString)) ||
-                (w.Translation != null && w.Translation.Contains(searchString)));
+            (w.FrenchTerm != null && w.FrenchTerm.Contains(normalizedSearch)) ||
+            (w.Translation != null && w.Translation.Contains(normalizedSearch)));
         }
 
         if (difficulty.HasValue)
         {
             wordsQuery = wordsQuery.Where(w => w.DifficultyLevel == difficulty);
+        }
+
+        if (onlyFavorites && User.IsInRole(AppRoles.Student))
+        {
+            var currentUserId = User.GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Challenge();
+            }
+
+            wordsQuery = wordsQuery.Where(w => _context.Favorites.Any(f => f.UserId == currentUserId.Value && f.WordId == w.Id));
         }
 
         var words = await wordsQuery
@@ -349,6 +387,14 @@ public class WordsController : Controller
 
         var fileName = $"words_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
         return File(memoryStream.ToArray(), contentType, fileName);
+    }
+
+    private static string? NormalizeSearchText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return Regex.Replace(value.Trim(), @"\s+", " ");
     }
 
     private bool WordExists(int id)

@@ -12,10 +12,6 @@
             <small class="text-muted fs-5">— @ViewBag.TestTitle</small>
         }
     </h1>
-    @if (User.IsInRole(AppRoles.Teacher))
-    {
-        <a asp-action="Create" asp-route-testId="@ViewBag.TestId" class="btn btn-primary">+ Нова спроба</a>
-    }
 </div>
 
 <table class="table table-striped table-hover">

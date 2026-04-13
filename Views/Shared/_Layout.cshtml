@@ -36,12 +36,6 @@
                             <li class="nav-item">
                                 <a class="nav-link text-light" asp-area="" asp-controller="TestAttempts" asp-action="Index">📊 Результати</a>
                             </li>
-                            @if (User.IsInRole(AppRoles.Student))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-light" asp-area="" asp-controller="Favorites" asp-action="Index">⭐ Улюблені</a>
-                                </li>
-                            }
                         }
                     </ul>
 

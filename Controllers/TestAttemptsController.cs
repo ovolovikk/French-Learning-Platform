@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FrenchLearningPlatform.Domain.Model;
 using FrenchLearningPlatform.Infrastructure;
@@ -79,73 +78,6 @@ public class TestAttemptsController : Controller
         return View(attempt);
     }
 
-    // GET: TestAttempts/Create?testId=5
-    [Authorize(Roles = AppRoles.Teacher)]
-    public IActionResult Create(int? testId)
-    {
-        ViewBag.Tests = new SelectList(_context.Tests, "Id", "Title", testId);
-        ViewBag.ReturnTestId = testId;
-        return View();
-    }
-
-    // POST: TestAttempts/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<IActionResult> Create([Bind("TestId,Score,MistakesJsonb")] TestAttempt attempt)
-    {
-        if (ModelState.IsValid)
-        {
-            attempt.CompletedAt = DateTime.UtcNow;
-            _context.Add(attempt);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Details), new { id = attempt.Id });
-        }
-
-        ViewBag.Tests = new SelectList(_context.Tests, "Id", "Title", attempt.TestId);
-        return View(attempt);
-    }
-
-    // GET: TestAttempts/Edit/5
-    [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var attempt = await _context.TestAttempts.FindAsync(id);
-        if (attempt == null) return NotFound();
-
-        ViewBag.Tests = new SelectList(_context.Tests, "Id", "Title", attempt.TestId);
-        return View(attempt);
-    }
-
-    // POST: TestAttempts/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TestId,Score,MistakesJsonb,CompletedAt")] TestAttempt attempt)
-    {
-        if (id != attempt.Id) return NotFound();
-
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _context.Update(attempt);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AttemptExists(attempt.Id)) return NotFound();
-                else throw;
-            }
-            return RedirectToAction(nameof(Details), new { id = attempt.Id });
-        }
-
-        ViewBag.Tests = new SelectList(_context.Tests, "Id", "Title", attempt.TestId);
-        return View(attempt);
-    }
-
     // GET: TestAttempts/Delete/5
     [Authorize(Roles = AppRoles.Teacher)]
     public async Task<IActionResult> Delete(int? id)
@@ -176,7 +108,4 @@ public class TestAttemptsController : Controller
         }
         return RedirectToAction(nameof(Index));
     }
-
-    private bool AttemptExists(int id) =>
-        _context.TestAttempts.Any(e => e.Id == id);
 }

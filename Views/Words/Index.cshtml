@@ -26,22 +26,24 @@
                asp-route-categoryId="@ViewBag.CategoryId"
                asp-route-searchString="@ViewBag.SearchString"
                asp-route-difficulty="@ViewBag.Difficulty"
+               asp-route-onlyFavorites="@ViewBag.OnlyFavorites"
                class="btn btn-outline-primary">⬇ Експорт Excel</a>
             <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">+ Нове слово</a>
         }
     </div>
 </div>
 
-<form method="get" class="row g-2 mb-4 align-items-center">
-    @if (ViewBag.CategoryId != null)
-    {
-        <input type="hidden" name="categoryId" value="@ViewBag.CategoryId" />
-    }
-    <div class="col-md-5">
-        <input type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Пошук за словом або перекладом..." />
+<form id="wordsFiltersForm" method="get" class="row g-2 mb-4 align-items-center">
+    <div class="col-md-3">
+        <select id="categoryId" name="categoryId" class="form-select" asp-items="ViewBag.Categories">
+            <option value="">-- Усі категорії --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <input id="searchString" type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Пошук за словом або перекладом..." />
     </div>
     <div class="col-md-3">
-        <select name="difficulty" class="form-select">
+        <select id="difficulty" name="difficulty" class="form-select">
             <option value="">-- Усі рівні складності --</option>
             @for (int i = 1; i <= 5; i++)
             {
@@ -59,6 +61,15 @@
     <div class="col-md-2">
         <button type="submit" class="btn btn-secondary w-100">Шукати</button>
     </div>
+    @if (ViewBag.CanUseFavorites == true)
+    {
+        <div class="col-md-12">
+            <div class="form-check mt-1">
+                <input class="form-check-input" type="checkbox" id="onlyFavorites" name="onlyFavorites" value="true" @(ViewBag.OnlyFavorites == true ? "checked" : null) />
+                <label class="form-check-label" for="onlyFavorites">Показати тільки улюблені слова</label>
+            </div>
+        </div>
+    }
 </form>
 
 @if (ViewBag.ImportResult != null)
@@ -126,3 +137,23 @@
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('wordsFiltersForm');
+            if (!form) return;
+
+            const categorySelect = document.getElementById('categoryId');
+            const difficultySelect = document.getElementById('difficulty');
+            const onlyFavoritesCheckbox = document.getElementById('onlyFavorites');
+
+            [categorySelect, difficultySelect, onlyFavoritesCheckbox].forEach((el) => {
+                if (el) {
+                    el.addEventListener('change', () => form.submit());
+                }
+            });
+        })();
+    </script>
+}
+
